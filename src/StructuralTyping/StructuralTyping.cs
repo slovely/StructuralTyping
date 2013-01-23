@@ -54,11 +54,6 @@ namespace StructuralTyping
             return obj;
         }
 
-        private static void SetProperty(this object target, string name, object value)
-        {
-            target.GetType().GetProperty(name).SetValue(target, value);
-        }
-
         private static IDictionary<string, object> ToDictionary(this object data)
         {
             const BindingFlags publicAttributes = BindingFlags.Public | BindingFlags.Instance;
