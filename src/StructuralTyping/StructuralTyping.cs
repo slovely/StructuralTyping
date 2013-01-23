@@ -19,26 +19,34 @@ namespace StructuralTyping
 
             public void Intercept(IInvocation invocation)
             {
-                var property = _propertyValues.FirstOrDefault(x => x.Key == invocation.Method.Name.Replace("get_", ""));
-                if (!property.Equals(default(KeyValuePair<string, object>)))
+                if (invocation.Method.IsSpecialName && invocation.Method.Name.StartsWith("get_", StringComparison.Ordinal))
                 {
-                    invocation.ReturnValue = property.Value;
+                    var property = _propertyValues.FirstOrDefault(x => x.Key == invocation.Method.Name.Remove(0, 4));
+                    if (!property.Equals(default(KeyValuePair<string, object>)))
+                    {
+                        invocation.ReturnValue = property.Value;
+                    }
+                    else
+                    {
+                        if (invocation.Method.ReturnType.IsValueType)
+                        {
+                            invocation.ReturnValue = Activator.CreateInstance(invocation.Method.ReturnType);
+                        }
+                        else
+                        {
+                            invocation.ReturnValue = null;
+                        }
+                    }
                 }
             }
         }
 
         private static ProxyGenerator _generator = new ProxyGenerator();
 
-        public static T New<T>() where T : class
+        public static T New<T>(object propertyValues = null) where T : class
         {
-            return _generator.CreateInterfaceProxyWithoutTarget<T>();
-        }
-
-        public static T New<T>(object propertyValues) where T : class
-        {
+            propertyValues = propertyValues ?? new object();
             var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary()));
-            
-
             return obj;
         }
 
