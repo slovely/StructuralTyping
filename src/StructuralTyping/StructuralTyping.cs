@@ -38,6 +38,10 @@ namespace StructuralTyping
                         }
                     }
                 }
+                else if (invocation.Method.IsSpecialName && invocation.Method.Name.StartsWith("set_"))
+                {
+                    _propertyValues[invocation.Method.Name.Remove(0, 4)] = invocation.GetArgumentValue(0);
+                }
             }
         }
 

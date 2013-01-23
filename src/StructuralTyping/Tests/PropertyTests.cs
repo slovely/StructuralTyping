@@ -28,6 +28,15 @@ namespace StructuralTyping.Tests
             Assert.IsNull(obj.OtherObject);
         }
 
+        [TestCase]
+        public void Should_be_able_to_update_interface_properties()
+        {
+            var obj = A.New<IInterfaceWithProperties>(new {Name = "Dave"});
+            obj.Name = "Lucy";
+            Assert.AreEqual("Lucy", obj.Name);
+        }
+
+
         public interface IInterfaceWithProperties
         {
             string Name { get; set; }
