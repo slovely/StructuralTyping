@@ -1,4 +1,7 @@
-﻿namespace StructuralTyping.Tests
+﻿
+
+
+namespace StructuralTyping.Tests
 {
 
 
