@@ -12,7 +12,7 @@ namespace StructuralTyping.Tests
             Assert.IsInstanceOf<IEmptyInterface>(obj);
         }
 
-        private interface IEmptyInterface
+        public interface IEmptyInterface
         {
         }
     }

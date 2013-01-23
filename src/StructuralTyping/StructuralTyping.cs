@@ -1,10 +1,14 @@
-﻿namespace StructuralTyping
+﻿using Castle.DynamicProxy;
+
+namespace StructuralTyping
 {
     public static class A
     {
-        public static T New<T>()
+        private static ProxyGenerator _generator = new ProxyGenerator();
+
+        public static T New<T>() where T : class
         {
-            return default(T);
+            return _generator.CreateInterfaceProxyWithoutTarget<T>();
         }
     }
 }
