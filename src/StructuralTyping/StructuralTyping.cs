@@ -7,26 +7,14 @@ using Castle.DynamicProxy;
 
 namespace StructuralTyping
 {
-    public class Method
-    {
-        public Method(string name, Delegate @delegate)
-        {
-            Name = name;
-            Delegate = @delegate;
-        }
-
-        public string Name { get; set; }
-        public Delegate Delegate { get; set; }
-    }
-
     public static class A
     {
         private static readonly ProxyGenerator _generator = new ProxyGenerator();
 
-        public static T New<T>(object propertyValues = null, params Method[] methods) where T : class
+        public static T New<T>(object propertyValues = null) where T : class
         {
             propertyValues = propertyValues ?? new object();
-            var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary()), new MethodInterceptor(methods));
+            var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary()));
             return obj;
         }
 
@@ -36,55 +24,6 @@ namespace StructuralTyping
             return data.GetType().GetProperties(publicAttributes)
                        .Where(property => property.CanRead)
                        .ToDictionary(property => property.Name, property => property.GetValue(data, null));
-        }
-
-        private class MethodInterceptor : IInterceptor
-        {
-            private readonly Dictionary<string, Delegate> _methods;
-
-            public MethodInterceptor(IEnumerable<Method> methods)
-            {
-                _methods = methods.ToDictionary(m => m.Name, m => m.Delegate);
-            }
-
-            public void Intercept(IInvocation invocation)
-            {
-                if (invocation.Method.IsSpecialName) return;
-
-                KeyValuePair<string, Delegate> item = _methods.FirstOrDefault(x => x.Key == invocation.Method.Name);
-                if (item.Equals(default(KeyValuePair<string, Delegate>))) return;
-
-                MethodInfo method = item.Value.Method;
-
-                ParameterInfo[] expectedParameters = invocation.Method.GetParameters();
-                bool methodMatches = expectedParameters.SequenceEqual(method.GetParameters(), new MethodParamComparer())
-                                     && method.ReturnType == invocation.Method.ReturnType;
-
-                if (!methodMatches) return;
-
-                Delegate d = CreateDelegate(method);
-
-                invocation.ReturnValue = d.DynamicInvoke(invocation.Arguments);
-            }
-
-            public static Delegate CreateDelegate(MethodInfo method)
-            {
-                var args = new List<Type>(
-                    method.GetParameters().Select(p => p.ParameterType));
-                Type delegateType;
-                if (method.ReturnType == typeof (void))
-                {
-                    delegateType = Expression.GetActionType(args.ToArray());
-                }
-                else
-                {
-                    args.Add(method.ReturnType);
-                    delegateType = Expression.GetFuncType(args.ToArray());
-                }
-                Delegate d = Delegate.CreateDelegate(delegateType, null, method);
-                Console.WriteLine(d);
-                return d;
-            }
         }
 
         private class MethodParamComparer : IEqualityComparer<ParameterInfo>
@@ -113,21 +52,14 @@ namespace StructuralTyping
             {
                 if (invocation.Method.IsSpecialName && invocation.Method.Name.StartsWith("get_", StringComparison.Ordinal))
                 {
-                    KeyValuePair<string, object> property = _propertyValues.FirstOrDefault(x => x.Key == invocation.Method.Name.Remove(0, 4));
+                    var property = _propertyValues.FirstOrDefault(x => x.Key == invocation.Method.Name.Remove(0, 4));
                     if (!property.Equals(default(KeyValuePair<string, object>)))
                     {
                         invocation.ReturnValue = property.Value;
                     }
                     else
                     {
-                        if (invocation.Method.ReturnType.IsValueType)
-                        {
-                            invocation.ReturnValue = Activator.CreateInstance(invocation.Method.ReturnType);
-                        }
-                        else
-                        {
-                            invocation.ReturnValue = null;
-                        }
+                        invocation.ReturnValue = invocation.Method.ReturnType.IsValueType ? Activator.CreateInstance(invocation.Method.ReturnType) : null;
                     }
                 }
                 else if (invocation.Method.IsSpecialName && invocation.Method.Name.StartsWith("set_"))
@@ -136,8 +68,38 @@ namespace StructuralTyping
                 }
                 else
                 {
-                    invocation.Proceed();
+                    if (invocation.Method.IsSpecialName) return;
+
+                    var item = _propertyValues.FirstOrDefault(x => x.Key == invocation.Method.Name);
+                    if (item.Equals(default(KeyValuePair<string, object>))) return;
+
+                    var method = ((Delegate) item.Value).Method;
+
+                    var expectedParameters = invocation.Method.GetParameters();
+                    var methodMatches = expectedParameters.SequenceEqual(method.GetParameters(), new MethodParamComparer())
+                                         && method.ReturnType == invocation.Method.ReturnType;
+
+                    if (!methodMatches) return;
+
+                    var d = CreateDelegate(method);
+                    invocation.ReturnValue = d.DynamicInvoke(invocation.Arguments);
                 }
+            }
+
+            public static Delegate CreateDelegate(MethodInfo method)
+            {
+                var args = method.GetParameters().Select(p => p.ParameterType).ToList();
+                Type delegateType;
+                if (method.ReturnType == typeof(void))
+                {
+                    delegateType = Expression.GetActionType(args.ToArray());
+                }
+                else
+                {
+                    args.Add(method.ReturnType);
+                    delegateType = Expression.GetFuncType(args.ToArray());
+                }
+                return Delegate.CreateDelegate(delegateType, null, method);
             }
         }
     }
