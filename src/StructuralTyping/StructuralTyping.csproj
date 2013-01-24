@@ -47,10 +47,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StructuralTyping.cs" />
     <Compile Include="Tests\BasicTests.cs" />
+    <Compile Include="Tests\MethodTests.cs" />
+    <Compile Include="Tests\PropertyTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
