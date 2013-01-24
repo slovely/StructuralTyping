@@ -9,6 +9,12 @@ namespace StructuralTyping
 {
     public class Method
     {
+        public Method(string name, Delegate @delegate)
+        {
+            Name = name;
+            Delegate = @delegate;
+        }
+
         public string Name { get; set; }
         public Delegate Delegate { get; set; }
     }
@@ -17,7 +23,7 @@ namespace StructuralTyping
     {
         private static readonly ProxyGenerator _generator = new ProxyGenerator();
 
-        public static T New<T>(object propertyValues = null, params KeyValuePair<string, Delegate>[] methods) where T : class
+        public static T New<T>(object propertyValues = null, params Method[] methods) where T : class
         {
             propertyValues = propertyValues ?? new object();
             var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary()), new MethodInterceptor(methods));
@@ -36,9 +42,9 @@ namespace StructuralTyping
         {
             private readonly Dictionary<string, Delegate> _methods;
 
-            public MethodInterceptor(IEnumerable<KeyValuePair<string, Delegate>> methods)
+            public MethodInterceptor(IEnumerable<Method> methods)
             {
-                _methods = methods.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                _methods = methods.ToDictionary(m => m.Name, m => m.Delegate);
             }
 
             public void Intercept(IInvocation invocation)
