@@ -14,7 +14,17 @@ namespace StructuralTyping
         public static T New<T>(object propertyValues = null, object target = null) where T : class
         {
             propertyValues = propertyValues ?? new object();
-            var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary(), target));
+
+            T obj;
+            if (typeof (T).IsInterface)
+            {
+                obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary(), target));
+            }
+            else
+            {
+                obj = _generator.CreateClassProxy<T>(new PropertyInteceptor(propertyValues.ToDictionary(), target));
+            }
+
             return obj;
         }
 

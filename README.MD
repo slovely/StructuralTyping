@@ -30,6 +30,8 @@ If the interface contains a method, you can create these too, by passing in a Fu
     var anonObject = A.New<IDoSomething>(new { Calculate = new Func<int, string>(i => "The answer is " + i) });
     var answer = anonObject.Calculate(7); //returns "The answer is 7"
 
+The above also works for classes (as long as the members are virtual).
+
 LIMITATIONS
 ===========
 Doesn't work if you pass in a method which has a closure.  This *won't* work:

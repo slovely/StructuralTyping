@@ -36,6 +36,12 @@ namespace StructuralTyping.Tests
             Assert.AreEqual("Lucy", obj.Name);
         }
 
+        [TestCase]
+        public void Should_work_with_a_class()
+        {
+            var obj = A.New<ClassWithProperties>(new {Name = "Simon"});
+            Assert.AreEqual("Simon", obj.Name);
+        }
 
         public interface IInterfaceWithProperties
         {
@@ -46,6 +52,11 @@ namespace StructuralTyping.Tests
         public interface IInterfaceWithReferenceProperties
         {
             IInterfaceWithProperties OtherObject { get; set; }
+        }
+
+        public class ClassWithProperties
+        {
+            public virtual string Name { get; set; }
         }
  
     }

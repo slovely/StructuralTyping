@@ -13,6 +13,11 @@ namespace StructuralTyping.Tests
             string MethodWithParameters(string a, int b);
         }
 
+        public abstract class ClassWithMethods
+        {
+            public abstract string MethodWithResult(int a);
+        }
+
         [TestCase]
         public void Can_call_a_method()
         {
@@ -51,6 +56,14 @@ namespace StructuralTyping.Tests
             obj.SimpleMethod();
 
             Assert.AreEqual(2, _tempNumber);
+        }
+
+        [TestCase]
+        public void Can_call_virtual_methods_on_a_class()
+        {
+            var obj = A.New<ClassWithMethods>(new {MethodWithResult = new Func<int, string>(i => i.ToString())});
+            var str = obj.MethodWithResult(3);
+            Assert.AreEqual("3", str);
         }
     }
 }
