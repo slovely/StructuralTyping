@@ -48,5 +48,7 @@ However, if 'number' is a class member, rather than a local variable, you can ge
     var result = anonObject.Calculate(8); //returns "The answer is 50"
 
 
-_Bottom line / TLDR_: Don't use this library!  It's silly and is just some hacky code I was playing with.  Use it to take idea's from only.
+*TLDR*
+====
+Don't use this library!  It's silly and is just some hacky code I was playing with.  Use it to take idea's from only.
 
