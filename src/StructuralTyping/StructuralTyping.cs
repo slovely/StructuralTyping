@@ -15,15 +15,9 @@ namespace StructuralTyping
         {
             propertyValues = propertyValues ?? new object();
 
-            T obj;
-            if (typeof (T).IsInterface)
-            {
-                obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary(), target));
-            }
-            else
-            {
-                obj = _generator.CreateClassProxy<T>(new PropertyInteceptor(propertyValues.ToDictionary(), target));
-            }
+            var obj = typeof (T).IsInterface
+                        ? _generator.CreateInterfaceProxyWithoutTarget<T>(new Interceptor(propertyValues.ToDictionary(), target))
+                        : _generator.CreateClassProxy<T>(new Interceptor(propertyValues.ToDictionary(), target));
 
             return obj;
         }
@@ -49,17 +43,12 @@ namespace StructuralTyping
             }
         }
 
-        private class PropertyInteceptor : IInterceptor
+        private class Interceptor : IInterceptor
         {
             private readonly IDictionary<string, object> _propertyValues;
             private readonly object _target;
 
-            public PropertyInteceptor(IDictionary<string, object> propertyValues)
-            {
-                _propertyValues = propertyValues;
-            }
-
-            public PropertyInteceptor(IDictionary<string, object> propertyValues, object target)
+            public Interceptor(IDictionary<string, object> propertyValues, object target)
             {
                 _propertyValues = propertyValues;
                 _target = target;
