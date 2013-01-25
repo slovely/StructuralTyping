@@ -11,10 +11,10 @@ namespace StructuralTyping
     {
         private static readonly ProxyGenerator _generator = new ProxyGenerator();
 
-        public static T New<T>(object propertyValues = null) where T : class
+        public static T New<T>(object propertyValues = null, object target = null) where T : class
         {
             propertyValues = propertyValues ?? new object();
-            var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary()));
+            var obj = _generator.CreateInterfaceProxyWithoutTarget<T>(new PropertyInteceptor(propertyValues.ToDictionary(), target));
             return obj;
         }
 
@@ -42,10 +42,17 @@ namespace StructuralTyping
         private class PropertyInteceptor : IInterceptor
         {
             private readonly IDictionary<string, object> _propertyValues;
+            private readonly object _target;
 
             public PropertyInteceptor(IDictionary<string, object> propertyValues)
             {
                 _propertyValues = propertyValues;
+            }
+
+            public PropertyInteceptor(IDictionary<string, object> propertyValues, object target)
+            {
+                _propertyValues = propertyValues;
+                _target = target;
             }
 
             public void Intercept(IInvocation invocation)
@@ -82,11 +89,16 @@ namespace StructuralTyping
                     if (!methodMatches) return;
 
                     var d = CreateDelegate(method);
+                    if (method.ReturnType == typeof (void))
+                    {
+                        d.DynamicInvoke(invocation.Arguments);
+                        return;
+                    }
                     invocation.ReturnValue = d.DynamicInvoke(invocation.Arguments);
                 }
             }
 
-            public static Delegate CreateDelegate(MethodInfo method)
+            private Delegate CreateDelegate(MethodInfo method)
             {
                 var args = method.GetParameters().Select(p => p.ParameterType).ToList();
                 Type delegateType;
@@ -99,7 +111,7 @@ namespace StructuralTyping
                     args.Add(method.ReturnType);
                     delegateType = Expression.GetFuncType(args.ToArray());
                 }
-                return Delegate.CreateDelegate(delegateType, null, method);
+                return Delegate.CreateDelegate(delegateType, _target, method);
             }
         }
     }

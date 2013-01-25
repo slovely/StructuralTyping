@@ -42,5 +42,15 @@ namespace StructuralTyping.Tests
             Assert.AreEqual("Answer=42", obj.MethodWithParameters("Answer=", 42));
         }
 
+        private int _tempNumber;
+        [TestCase]
+        public void Can_call_void_method()
+        {
+            _tempNumber = 1; //This cannot be a local var, as the dynamic proxy won't work with closures.
+            var obj = A.New<IInterfaceWithMethod>(new {SimpleMethod = new Action(() => _tempNumber++)}, this);
+            obj.SimpleMethod();
+
+            Assert.AreEqual(2, _tempNumber);
+        }
     }
 }
